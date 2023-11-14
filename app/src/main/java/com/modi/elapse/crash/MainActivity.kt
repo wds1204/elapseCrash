@@ -2,7 +2,6 @@ package com.modi.elapse.crash
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.widget.TextView
 import com.modi.elapse.crash.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
