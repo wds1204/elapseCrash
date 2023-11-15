@@ -1,7 +1,8 @@
 package com.modi.elapse.elapsecrash
 
 import android.content.Context
-import com.modi.elapse.elapsecrash.javaCrash.CrashHandler
+import com.modi.elapse.elapsecrash.crashMonitor.CrashHandler
+import com.modi.elapse.elapsecrash.crashMonitor.NativeCrashMonitor
 import com.modi.elapse.elapsecrash.util.AppGlobals
 import java.io.File
 
@@ -18,14 +19,13 @@ class CrashManager {
         private const val CRASH_DIR_JAVA = "java_crash"
         private const val CRASH_DIR_NATIVE = "native_crash"
 
-        // Used to load the 'elapsecrash' library on application startup.
-        init {
-            System.loadLibrary("elapsecrash")
-        }
 
         fun initElapseCrash(context: Context) {
             val javaCrashDir = getJavaCrashDir().absolutePath
+           val nativeCrashDir= getNativeCrashDir().absolutePath
             CrashHandler.init(context, javaCrashDir)
+            NativeCrashMonitor.init(context,nativeCrashDir)
+
         }
 
 

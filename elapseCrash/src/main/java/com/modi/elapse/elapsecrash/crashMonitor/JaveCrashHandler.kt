@@ -1,6 +1,5 @@
-package com.modi.elapse.elapsecrash.javaCrash
+package com.modi.elapse.elapsecrash.crashMonitor
 
-import android.app.ActivityManager
 import android.content.Context
 import android.os.Build
 import android.os.Process
