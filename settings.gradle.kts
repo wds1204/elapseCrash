@@ -15,4 +15,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "elapseCrash"
 include(":app")
- 
+include(":elapseCrash")
