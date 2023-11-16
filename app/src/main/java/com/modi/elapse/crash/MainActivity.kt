@@ -25,6 +25,9 @@ class MainActivity : AppCompatActivity() {
             divisionTest(10,0)
 
         }
+        binding.button2.setOnClickListener{
+            nativeCrash()
+        }
     }
 
     /**
@@ -32,6 +35,8 @@ class MainActivity : AppCompatActivity() {
      * which is packaged with this application.
      */
     private external fun stringFromJNI(): String
+
+    private external fun nativeCrash()
 
     companion object {
         // Used to load the 'crash' library on application startup.

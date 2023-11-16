@@ -1,6 +1,7 @@
 #include <jni.h>
 #include <string>
 #include <android/log.h>
+#include "SignalHandler.h"
 
 #define TAG "JNI_TAG"
 
@@ -64,18 +65,8 @@ static void callJavaCrashMethod(JNIEnv *env,const char* threadName,const char* e
     env->DeleteLocalRef(thread_Name);
 }
 
-extern "C" JNIEXPORT jstring JNICALL
-Java_com_modi_elapse_elapsecrash_CrashManager_stringFromJNI(
-        JNIEnv *env,
-        jobject /* this */) {
-    std::string hello = "Hello from C++";
-    return env->NewStringUTF(hello.c_str());
-}
 
 extern "C"
-
-
-
 JNIEXPORT void JNICALL
 Java_com_modi_elapse_elapsecrash_crashMonitor_NativeCrashMonitor_nativeInitCallBack(
         JNIEnv *env,
@@ -102,4 +93,7 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_modi_elapse_elapsecrash_crashMonitor_NativeCrashMonitor_nativeInit(JNIEnv *env,
                                                                             jobject thiz) {
+    installSignalHandlers();
+
+
 }
