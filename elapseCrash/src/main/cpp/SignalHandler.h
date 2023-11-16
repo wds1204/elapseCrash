@@ -6,11 +6,12 @@
 #define ELAPSECRASH_SIGNALHANDLER_H
 
 #include "CrashDefine.h"
+#include <string>
 
 
 extern bool  installSignalHandlers();
 
-extern void installAlternateStack()
+extern void installAlternateStack();
 
 
 

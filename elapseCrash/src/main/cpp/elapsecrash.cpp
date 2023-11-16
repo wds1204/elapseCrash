@@ -2,33 +2,28 @@
 #include <string>
 #include <android/log.h>
 #include "SignalHandler.h"
+#include "elf.h"
+#include "common/el_util.h"
 
 #define TAG "JNI_TAG"
 
 # define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)
 # define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
 
+# define EL_ON_CRASH_METHOD_NAME         "onCrash"
+# define EL_ON_CRASH_METHOD_SIGNATURE    "(Ljava/lang/String;Ljava/lang/Error;)V"
+
+
+# define EL_ERROR_CLASS                  "java/lang/Error"
+# define EL_CONSTRUCTOR_METHOD           "<init>"
+# define EL_CONSTRUCTOR_METHOD_SIGNATURE "(Ljava/lang/String;)V"
+
+
 jobject j_obj = nullptr;
 jmethodID onCrash_methodId = nullptr;
 
 
-static  char* getClassName(JNIEnv *env,  jclass anyClass)
-{
-    // Get the JNIEnv class
-    jclass classClass = env->FindClass( "java/lang/Class");
-    // Get the getName method ID
-    jmethodID getNameMethod = env->GetMethodID(classClass, "getName", "()Ljava/lang/String;");
-    // Call the getName method to get the class name
-    auto className = (jstring)env->CallObjectMethod( anyClass, getNameMethod);
-    // Convert the Java string to a C string
-    const char *classNameStr = env->GetStringUTFChars( className, nullptr);
-    // Print or use the class name as needed
-    printf("Class name: %s\n", classNameStr);
-    // Release the C string
-    env->ReleaseStringUTFChars( className, classNameStr);
 
-    return const_cast<char *>(classNameStr);
-}
 /**
  * 触发Java层的 CrashHandlerListener#onCrash方法
  * @param env
@@ -39,12 +34,12 @@ static void callJavaCrashMethod(JNIEnv *env,const char* threadName,const char* e
     if (j_obj== nullptr||onCrash_methodId== nullptr){
         return;
     }
-    jclass errorClass = (*env).FindClass( "java/lang/Error");
+    jclass errorClass = (*env).FindClass( EL_ERROR_CLASS);
     if (errorClass==nullptr){
         LOGE("java/lang/Error not found");
         return;
     }
-    jmethodID constructor=env->GetMethodID(errorClass,"<init>","(Ljava/lang/String;)V");
+    jmethodID constructor=env->GetMethodID(errorClass,EL_CONSTRUCTOR_METHOD,EL_CONSTRUCTOR_METHOD_SIGNATURE);
     if (constructor== nullptr){
         const char *className=getClassName(env,errorClass);
         LOGE("Class %s constructor not found",className);
@@ -80,8 +75,8 @@ Java_com_modi_elapse_elapsecrash_crashMonitor_NativeCrashMonitor_nativeInitCallB
         const char *className= getClassName(env,clz );
         LOGE("Class %s not found",className);
     }
-    onCrash_methodId = env->GetMethodID(clz, "onCrash",
-                                          "(Ljava/lang/String;Ljava/lang/Error;)V");
+    onCrash_methodId = env->GetMethodID(clz, EL_ON_CRASH_METHOD_NAME,
+                                          EL_ON_CRASH_METHOD_SIGNATURE);
 
     if (onCrash_methodId == nullptr) {
         LOGE("ERROR  onCrash not found");
@@ -94,6 +89,7 @@ JNIEXPORT void JNICALL
 Java_com_modi_elapse_elapsecrash_crashMonitor_NativeCrashMonitor_nativeInit(JNIEnv *env,
                                                                             jobject thiz) {
     installSignalHandlers();
+    installAlternateStack();
 
 
 }
