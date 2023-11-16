@@ -15,4 +15,5 @@ typedef struct Native_handler_context_struct{
     const char *threadName;
 } native_handler_context;
 
+
 #endif //ELAPSECRASH_HANDLERCONTEXT_H
