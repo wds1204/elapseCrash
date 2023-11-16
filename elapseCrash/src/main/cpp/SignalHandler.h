@@ -7,6 +7,8 @@
 
 #include "CrashDefine.h"
 #include <string>
+#include "CrashAnalyser.h"
+
 
 
 extern bool  installSignalHandlers();

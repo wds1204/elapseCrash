@@ -27,4 +27,14 @@ internal object NativeCrashMonitor : CrashHandlerListener {
 
         println("threadName=$threadName  error=$error")
     }
+
+    fun getThreadByName(threadName: String):Thread?{
+        val allThreads=Thread.getAllStackTraces()
+        allThreads.forEach {
+            if (it.key.name==threadName){
+                return it.key
+            }
+        }
+        return null
+    }
 }

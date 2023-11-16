@@ -13,6 +13,8 @@ void signalPass(int code, siginfo_t *info, void *sc) {
     signal(SIGALRM, SIG_DFL);
     (void) alarm(8);
 
+    notifyCaughtSignal(code,info,sc);
+
     //给系统原来的处理
     oldHandlers[code].sa_sigaction(code, info, sc);
 }
@@ -51,8 +53,8 @@ bool installSignalHandlers() {
 
     LOGD("installSignalHandlers");
     //取出系统或则第三方设置信号处理
-    for (int i = 0; i < exceptionSignalsNumber; ++i) {
-        if (sigaction(exceptionSignals[i], nullptr, &oldHandlers[exceptionSignals[i]]) != -1) {
+    for (int exceptionSignal : exceptionSignals) {
+        if (sigaction(exceptionSignal, nullptr, &oldHandlers[exceptionSignal]) == -1) {
             LOGE("sigaction error");
         }
     }
@@ -67,8 +69,8 @@ bool installSignalHandlers() {
     sa.sa_flags = SA_ONSTACK | SA_SIGINFO;
 
     //1.调用sigaction 来处理信号回调
-    for (int i = 0; i < exceptionSignalsNumber; ++i) {
-        if (sigaction(exceptionSignals[i], &sa, nullptr) == -1) {
+    for (int exceptionSignal : exceptionSignals) {
+        if (sigaction(exceptionSignal, &sa, nullptr) == -1) {
             //可以输出一个警告
         }
 

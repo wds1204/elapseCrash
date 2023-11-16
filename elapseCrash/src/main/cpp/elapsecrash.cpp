@@ -4,6 +4,8 @@
 #include "SignalHandler.h"
 #include "elf.h"
 #include "common/el_util.h"
+#include "common/JNIBridge.h"
+#include "CrashAnalyser.h"
 
 #define TAG "JNI_TAG"
 
@@ -67,8 +69,22 @@ Java_com_modi_elapse_elapsecrash_crashMonitor_NativeCrashMonitor_nativeInitCallB
         JNIEnv *env,
         jobject thiz,
         jobject callback) {
+
     //保持callback回调方法， 通过callback把监听到异常时回调给 java 层
     j_obj = env->NewGlobalRef(callback);
+    JavaVM *javaVm;
+    env->GetJavaVM(&javaVm);
+    JNIBridge *jniBridge=new JNIBridge(javaVm,j_obj);
+
+    //创建一个线程取监听是否有异常
+    initCondition();
+
+    pthread_t  pthread;
+    int ret= pthread_create(&pthread, nullptr,threadCrashMonitor,jniBridge);
+    if(ret==-1){
+        LOGD("pthread_create error,ret:%d",ret);
+    }
+
 
     jclass clz = env->GetObjectClass(callback);
     if (clz == nullptr) {
@@ -84,6 +100,9 @@ Java_com_modi_elapse_elapsecrash_crashMonitor_NativeCrashMonitor_nativeInitCallB
 
 
 }
+
+
+
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_modi_elapse_elapsecrash_crashMonitor_NativeCrashMonitor_nativeInit(JNIEnv *env,
