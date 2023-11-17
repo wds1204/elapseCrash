@@ -9,6 +9,7 @@ appcompat = "1.6.1"
 material = "1.8.0"
 constraintlayout = "2.1.4"
 preference = "1.2.0"
+anotation = "1.6.0"
 
 [libraries]
 core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }
@@ -19,6 +20,7 @@ appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "a
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 preference = { group = "androidx.preference", name = "preference", version.ref = "preference" }
+annotation = { group = "androidx.annotation", name = "annotation", version.ref = "anotation" }
 
 [plugins]
 com-android-application = { id = "com.android.application", version.ref = "agp" }

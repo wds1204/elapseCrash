@@ -2,6 +2,7 @@ package com.modi.elapse.elapsecrash.crashMonitor
 
 import android.content.Context
 import android.os.Looper
+import androidx.annotation.Keep
 import com.modi.elapse.elapsecrash.CrashHandlerListener
 import java.io.File
 import java.io.FileOutputStream
@@ -50,17 +51,11 @@ internal object NativeCrashMonitor : CrashHandlerListener {
 
     }
 
-    fun getThreadStackTraces(threadName: String): String {
-        return buildString {
-            getThreadByName(threadName)?.stackTrace?.forEach {
-                append("${it.toString()} \n")
-            }
-        }
-    }
 
+    @Keep
     fun getThreadByName(threadName: String): Thread? {
         if (threadName == "main") {
-            return Looper.getMainLooper().thread;
+            return Looper.getMainLooper().thread
         }
         val allThreads = Thread.getAllStackTraces()
         allThreads.forEach {
