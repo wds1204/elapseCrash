@@ -16,6 +16,11 @@
 # define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)
 # define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
 
+
+typedef struct Stack_Traces {
+    jobjectArray javaTraceObj;
+} StackTraces;
+
 class JNIBridge {
 private:
 
@@ -29,9 +34,9 @@ public:
 public:
     void throwExceptionToJava(native_handler_context *handlerContext);
 
-    const char *getJavaThreadStackTraces(const char *threadName);
+    void getJavaThreadStackTraces(const char *threadName);
 
-    void callJavaCrashMethod(const char *threadName, const char *errorMsg);
+    void callJavaCrashMethod(const char *threadName);
 
 };
 
