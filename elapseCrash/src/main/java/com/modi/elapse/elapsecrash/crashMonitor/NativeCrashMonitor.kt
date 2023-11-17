@@ -1,8 +1,8 @@
 package com.modi.elapse.elapsecrash.crashMonitor
 
 import android.content.Context
+import android.os.Looper
 import com.modi.elapse.elapsecrash.CrashHandlerListener
-
 
 
 internal object NativeCrashMonitor : CrashHandlerListener {
@@ -15,7 +15,7 @@ internal object NativeCrashMonitor : CrashHandlerListener {
     private external fun nativeInit()
 
     fun init(context: Context, crashDir: String) {
-        this.CRASH_DOR=crashDir
+        this.CRASH_DOR = crashDir
         nativeInitCallBack(this)
         nativeInit()
         context::class.java.name
@@ -25,13 +25,28 @@ internal object NativeCrashMonitor : CrashHandlerListener {
     override fun onCrash(threadName: String, error: Error) {
         //监听native层文件
 
-        println("threadName=$threadName  error=$error")
+        println("threadName=$threadName  error=${error.message}")
+
     }
 
-    fun getThreadByName(threadName: String):Thread?{
-        val allThreads=Thread.getAllStackTraces()
+
+    fun getThreadStackTraces(threadName: String): String {
+
+        return buildString {
+            getThreadByName(threadName)?.stackTrace?.forEach {
+                append("${it.toString()} \n")
+            }
+        }
+
+    }
+
+    private fun getThreadByName(threadName: String): Thread? {
+        if (threadName == "main") {
+            return Looper.getMainLooper().thread;
+        }
+        val allThreads = Thread.getAllStackTraces()
         allThreads.forEach {
-            if (it.key.name==threadName){
+            if (it.key.name == threadName) {
                 return it.key
             }
         }

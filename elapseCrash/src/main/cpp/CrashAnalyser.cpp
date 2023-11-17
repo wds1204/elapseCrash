@@ -46,10 +46,7 @@ void *threadCrashMonitor(void *argv) {
 void waitForSignal() {
     pthread_mutex_lock(&signalLock);
     LOGD("waitForSignal start.");
-//     while (!isSignalCaught){
     pthread_cond_wait(&signalCond, &signalLock);
-    //}
-    //isSignalCaught= false;
 
     LOGD("waitForSignal Finished.");
     pthread_mutex_unlock(&signalLock);
@@ -83,7 +80,6 @@ void saveInfo2Context(int code, siginfo_t *info, void *sc) {
         handlerContext->threadName="main";
     }else{
         handlerContext->threadName=getThreadName( handlerContext->tid);
-
     }
 }
 

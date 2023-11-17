@@ -3,7 +3,7 @@
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_modi_elapse_crash_MainActivity_stringFromJNI(
-        JNIEnv* env,
+        JNIEnv *env,
         jobject /* this */) {
     std::string hello = "Hello from C++";
 
@@ -13,6 +13,6 @@ Java_com_modi_elapse_crash_MainActivity_stringFromJNI(
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_modi_elapse_crash_MainActivity_nativeCrash(JNIEnv *env, jobject thiz) {
-    int *num= nullptr;
-    *num=100;
+    int *num = nullptr;
+    *num = 100;
 }

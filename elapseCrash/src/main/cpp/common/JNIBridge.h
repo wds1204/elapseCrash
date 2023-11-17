@@ -4,9 +4,11 @@
 
 #ifndef ELAPSECRASH_JNIBRIDGE_H
 #define ELAPSECRASH_JNIBRIDGE_H
+
 #include <jni.h>
 #include <android/log.h>
 #include "HandlerContext.h"
+#include "el_util.h"
 
 
 #define TAG "JNI_TAG"
@@ -16,14 +18,20 @@
 
 class JNIBridge {
 private:
+
     JavaVM *javaVm;
     jobject callbackObj;
+    jclass nativeCrashMonitorClass;
 
 public:
-    JNIBridge( JavaVM *javaVm,jobject callbackObj);
+    JNIBridge(JavaVM *javaVm, jobject callbackObj, jclass nativeCrashMonitorClass);
 
 public:
     void throwExceptionToJava(native_handler_context *handlerContext);
+
+    const char *getJavaThreadStackTraces(const char *threadName);
+
+    void callJavaCrashMethod(const char *threadName, const char *errorMsg);
 
 };
 

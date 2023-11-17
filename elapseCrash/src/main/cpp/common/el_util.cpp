@@ -46,7 +46,6 @@ char* getClassName(JNIEnv *env,  jclass anyClass)
 }
 
 
-
 const char* xcc_util_get_signame(const siginfo_t* si)
 {
     switch (si->si_signo)
