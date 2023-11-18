@@ -8,12 +8,12 @@
 #include "SignalHandler.h"
 
 void signalPass(int code, siginfo_t *info, void *sc) {
-    LOGE("监听到Native崩溃...");
+    LOGD("监听到Native崩溃...");
     signal(code, SIG_DFL);
     signal(SIGALRM, SIG_DFL);
     (void) alarm(8);
 
-    notifyCaughtSignal(code,info,sc);
+    notifyCaughtSignal(code, info, sc);
 
     //给系统原来的处理
     oldHandlers[code].sa_sigaction(code, info, sc);
@@ -59,17 +59,18 @@ bool installSignalHandlers() {
         }
     }
 
-    //初始化赋值
+    //设置信号处理函数时进行的一些初始化工作
     struct sigaction sa{};
     memset(&sa, 0, sizeof(sa));
     sigemptyset(&sa.sa_mask);
 
     //指定信号处理的回调函数
-    sa.sa_sigaction = signalPass;
-    sa.sa_flags = SA_ONSTACK | SA_SIGINFO;
+    sa.sa_sigaction = signalPass;//sa.sa_sigaction 成员设置为一个信号处理函数 signalPass
+    sa.sa_flags =
+            SA_ONSTACK | SA_SIGINFO;//SA_ONSTACK 表示在信号处理函数运行时使用备份的信号栈，SA_SIGINFO 表示信号处理函数接收附加信息
 
     //1.调用sigaction 来处理信号回调
-    for (int exceptionSignal : exceptionSignals) {
+    for (int exceptionSignal: exceptionSignals) {
         if (sigaction(exceptionSignal, &sa, nullptr) == -1) {
             //可以输出一个警告
         }

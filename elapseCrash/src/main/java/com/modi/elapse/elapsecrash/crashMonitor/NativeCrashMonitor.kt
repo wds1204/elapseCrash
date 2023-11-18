@@ -12,15 +12,15 @@ import java.util.Locale
 
 
 internal object NativeCrashMonitor : CrashHandlerListener {
-    var CRASH_DOR = "crash_dir"
+    private var CRASH_DOR = "crash_dir"
 
     // Used to load the 'elapsecrash' library on application startup.
     init {
         System.loadLibrary("elapsecrash")
     }
 
-    val sdf = SimpleDateFormat("yyyy-M-dd hh:mm:ss", Locale.CANADA)
-    val launchTime: String = sdf.format(Date())
+    private val sdf = SimpleDateFormat("yyyy-M-dd hh:mm:ss", Locale.CANADA)
+    private val launchTime: String = sdf.format(Date())
     private external fun nativeInitCallBack(callback: CrashHandlerListener)
     private external fun nativeInit()
 

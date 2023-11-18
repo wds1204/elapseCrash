@@ -4,26 +4,7 @@
 
 #include "el_util.h"
 
-#include <unistd.h>
-#include <errno.h>
-#include <signal.h>
-#include <ctype.h>
-#include <stdarg.h>
-#include <stdlib.h>
-#include <string.h>
-#include <fcntl.h>
-#include <time.h>
-#include <sys/time.h>
-#include <sys/ptrace.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/utsname.h>
-#include <sys/system_properties.h>
-//#include "xcc_util.h"
-//#include "xcc_errno.h"
-//#include "xcc_fmt.h"
-//#include "xcc_version.h"
-//#include "xcc_libc_support.h"
+
 #define PROCESS_NAME_LENGTH 512
 #define THREAD_NAME_LENGTH 512
 
