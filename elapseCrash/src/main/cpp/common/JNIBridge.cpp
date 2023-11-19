@@ -5,6 +5,11 @@
 #include <unwind.h>
 #include <dlfcn.h>
 #include "JNIBridge.h"
+#include <execinfo.h>
+#include <cxxabi.h>
+#include <dlfcn.h>
+#include <unwind.h>
+#include <cstdio>
 
 StackTraces *stackTraces;
 
@@ -15,7 +20,6 @@ JNIBridge::JNIBridge(JavaVM *javaVm, jobject callbackObj, jclass nativeCrashMoni
     this->nativeCrashMonitorClass = nativeCrashMonitorClass;
 
 }
-
 
 /**
  *
@@ -96,23 +100,36 @@ void JNIBridge::setJavaThreadStackTraces(const char *threadName) {
 }
 
 void JNIBridge::setNativeStackTraces(native_handler_context *handlerContext) {
+    LOGD("java.long.Error: signal %d (%s) at address ", handlerContext->code,
+         xcc_util_get_sigcodename(handlerContext->info));
     int frameSize = handlerContext->frame_Size;
-    for (int index = 0; index < frameSize; ++index) {
+    for (size_t index = 0; index < frameSize; ++index) {
         uintptr_t pc = handlerContext->frames[index];
         Dl_info info;
         const void *addr = (void *const) (pc);
         if (dladdr(addr, &info) != 0 && info.dli_fname != nullptr) {
 
-            const uintptr_t near = (uintptr_t) (info.dli_saddr);
-            // 打印函数名和库路径
-//            LOGD("函数名：%s\n", info.dli_sname ? info.dli_sname : "未知");
-//            LOGD("库路径：%s\n", info.dli_fname ? info.dli_fname : "未知");
-            const uintptr_t offs = pc - near;//偏移值
+            // 解码 C++ 函数名
+            int status;
+            char *demangled = abi::__cxa_demangle(info.dli_sname, 0, 0, &status);
+            const auto near = (uintptr_t) (info.dli_saddr);
+            const uintptr_t offs = pc - near;
+            //偏移量=当前堆栈帧的地址(pc)-共享库的基地址(dli_fbase)，这个偏移量可以用于定位在共享库中的具体位置
             uintptr_t addr_rel = pc - (uintptr_t) info.dli_fbase;
             const uintptr_t addr_to_use = is_dll(info.dli_fname) ? addr_rel : pc;
+            if (status == 0) {
+                LOGD("native crash #%02zx: pc 0x%016x %s (%s)\n", index, addr_to_use, demangled,
+                     info.dli_fname);
+                free(demangled);
+            } else {
+                LOGD("native crash #%02zx: pc 0x%016x %s (%s)\n", index, addr_to_use,
+                     info.dli_sname, info.dli_fname);
+            }
+//
+//            LOGD("native crash #%02lx pc 0x%016lx %s (%s+0x%lx)", index, addr_to_use,
+//                 info.dli_fname, info.dli_sname, offs);
 
-            LOGD("native crash #%02lx pc 0x%016lx %s (%s+0x%lx)", index, addr_to_use,
-                 info.dli_fname, info.dli_sname, offs);
+
         }
 
     }

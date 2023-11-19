@@ -11,11 +11,15 @@ Java_com_modi_elapse_crash_MainActivity_stringFromJNI(
     return env->NewStringUTF(hello.c_str());
 }
 
+void crash() {
+    int *num = nullptr;
+    *num = 100;
+}
+
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_modi_elapse_crash_MainActivity_nativeCrash(JNIEnv *env, jobject thiz) {
-    int *num = nullptr;
-    *num = 100;
+    crash();
 }
 
 extern "C"
