@@ -9,6 +9,8 @@
 #include <android/log.h>
 #include "HandlerContext.h"
 #include "el_util.h"
+# include <cstdint>
+#include <iostream>
 
 
 #define TAG "JNI_TAG"
@@ -24,20 +26,21 @@ typedef struct Stack_Traces {
 class JNIBridge {
 private:
 
-    JavaVM *javaVm;
     jobject callbackObj;
     jclass nativeCrashMonitorClass;
 
 public:
     JNIBridge(JavaVM *javaVm, jobject callbackObj, jclass nativeCrashMonitorClass);
 
+    JavaVM *javaVm;
 public:
     void throwExceptionToJava(native_handler_context *handlerContext);
 
-    void getJavaThreadStackTraces(const char *threadName);
+    void setJavaThreadStackTraces(const char *threadName);
 
     void callJavaCrashMethod(const char *threadName);
 
+    void setNativeStackTraces(native_handler_context *handlerContext);
 };
 
 

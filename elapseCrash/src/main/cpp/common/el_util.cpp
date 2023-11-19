@@ -61,15 +61,24 @@ const char* xcc_util_get_sigcodename(const siginfo_t* si)
         case SIGFPE:
             switch(si->si_code)
             {
-                case FPE_INTDIV:   return "FPE_INTDIV";
-                case FPE_INTOVF:   return "FPE_INTOVF";
-                case FPE_FLTDIV:   return "FPE_FLTDIV";
-                case FPE_FLTOVF:   return "FPE_FLTOVF";
-                case FPE_FLTUND:   return "FPE_FLTUND";
-                case FPE_FLTRES:   return "FPE_FLTRES";
-                case FPE_FLTINV:   return "FPE_FLTINV";
-                case FPE_FLTSUB:   return "FPE_FLTSUB";
-                default:           break;
+                case FPE_INTDIV:
+                    return "Integer divide by zero";
+                case FPE_INTOVF:
+                    return "Integer overflow";
+                case FPE_FLTDIV:
+                    return "Floating-point divide by zero";
+                case FPE_FLTOVF:
+                    return "Floating-point overflow";
+                case FPE_FLTUND:
+                    return "Floating-point underflow";
+                case FPE_FLTRES:
+                    return "Floating-point inexact result";
+                case FPE_FLTINV:
+                    return "FInvalid floating-point operation";
+                case FPE_FLTSUB:
+                    return "Subscript out of range\"";
+                default:
+                    return "Floating-point";
             }
             break;
         case SIGILL:
@@ -87,13 +96,17 @@ const char* xcc_util_get_sigcodename(const siginfo_t* si)
             }
             break;
         case SIGSEGV:
-            switch(si->si_code)
-            {
-                case SEGV_MAPERR:  return "SEGV_MAPERR";
-                case SEGV_ACCERR:  return "SEGV_ACCERR";
-                case SEGV_BNDERR:  return "SEGV_BNDERR";
-                case SEGV_PKUERR:  return "SEGV_PKUERR";
-                default:           break;
+            switch(si->si_code) {
+                case SEGV_MAPERR:
+                    return "Address not mapped to object";
+                case SEGV_ACCERR:
+                    return "Invalid permissions for mapped object";
+                case SEGV_BNDERR:
+                    return "SEGV_BNDERR Segmentation violation";
+                case SEGV_PKUERR:
+                    return "SEGV_PKUERR Segmentation violation";
+                default:
+                    break;
             }
             break;
         case SIGTRAP:
@@ -179,7 +192,7 @@ const char* getProcessName(pid_t pid){
     char *line=(char*)calloc(1,PROCESS_NAME_LENGTH);
     char *path= (char*)calloc(1,PATH_MAX);
     snprintf(path,PATH_MAX,"/proc/%d/cmdline",pid);
-    FILE *cmdFile=nullptr;
+    FILE *cmdFile;
     if(cmdFile= fopen(path,"r")){
         fgets(line,PROCESS_NAME_LENGTH,cmdFile);
         fclose(cmdFile);
@@ -207,13 +220,25 @@ const char*  getThreadName( pid_t pid){
         fgets(line,THREAD_NAME_LENGTH,cmdFile);
         fclose(cmdFile);
     }
-    if (line){
-        int length= strlen(line);
-        if(line[length-1]=='\n'){
-            line[length-1]='\0';
+    if (line) {
+        int length = strlen(line);
+        if (line[length - 1] == '\n') {
+            line[length - 1] = '\0';
         }
     }
     free(path);
     return line;
 
+}
+
+bool is_dll(const char *dll_name) {
+    size_t i;
+    for (int i = 0; dll_name[i] != '\0'; ++i) {
+        if (dll_name[i + 0] == '.' && dll_name[i + 1] == 's' && dll_name[i + 2] == 'o' &&
+            (dll_name[i + 3] == '\0' || dll_name[i + 3] == '.')) {
+            return true;
+        }
+
+    }
+    return false;
 }

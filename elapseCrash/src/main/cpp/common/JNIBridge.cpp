@@ -2,6 +2,8 @@
 // Created by 吴东生 on 2023/11/16.
 //
 
+#include <unwind.h>
+#include <dlfcn.h>
 #include "JNIBridge.h"
 
 StackTraces *stackTraces;
@@ -20,17 +22,17 @@ JNIBridge::JNIBridge(JavaVM *javaVm, jobject callbackObj, jclass nativeCrashMoni
  * @param handlerContext
  */
 void JNIBridge::throwExceptionToJava(native_handler_context *handlerContext) {
-    //1.获取Java岑的堆栈信息
-    getJavaThreadStackTraces(handlerContext->threadName);
+    //1.计算Java岑的堆栈信息
+    setJavaThreadStackTraces(handlerContext->threadName);
     //2.获取native层的堆栈信息
+    setNativeStackTraces(handlerContext);
 
     //3.调用CrashHandlerListener的onCrash方法
     callJavaCrashMethod(handlerContext->threadName);
 
 }
 
-
-void JNIBridge::getJavaThreadStackTraces(const char *threadName) {
+void JNIBridge::setJavaThreadStackTraces(const char *threadName) {
     // 1. 在非Java线程中获取JNIEnv
     JNIEnv *env = nullptr;
     JavaVM *jvm = this->javaVm;
@@ -90,6 +92,31 @@ void JNIBridge::getJavaThreadStackTraces(const char *threadName) {
     env->DeleteLocalRef(jThreadName);
     // 3. 将线程与JVM分离
     jvm->DetachCurrentThread();
+
+}
+
+void JNIBridge::setNativeStackTraces(native_handler_context *handlerContext) {
+    int frameSize = handlerContext->frame_Size;
+    for (int index = 0; index < frameSize; ++index) {
+        uintptr_t pc = handlerContext->frames[index];
+        Dl_info info;
+        const void *addr = (void *const) (pc);
+        if (dladdr(addr, &info) != 0 && info.dli_fname != nullptr) {
+
+            const uintptr_t near = (uintptr_t) (info.dli_saddr);
+            // 打印函数名和库路径
+//            LOGD("函数名：%s\n", info.dli_sname ? info.dli_sname : "未知");
+//            LOGD("库路径：%s\n", info.dli_fname ? info.dli_fname : "未知");
+            const uintptr_t offs = pc - near;//偏移值
+            uintptr_t addr_rel = pc - (uintptr_t) info.dli_fbase;
+            const uintptr_t addr_to_use = is_dll(info.dli_fname) ? addr_rel : pc;
+
+            LOGD("native crash #%02lx pc 0x%016lx %s (%s+0x%lx)", index, addr_to_use,
+                 info.dli_fname, info.dli_sname, offs);
+        }
+
+    }
+
 
 }
 

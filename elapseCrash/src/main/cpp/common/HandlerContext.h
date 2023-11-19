@@ -4,7 +4,11 @@
 
 #ifndef ELAPSECRASH_HANDLERCONTEXT_H
 #define ELAPSECRASH_HANDLERCONTEXT_H
+
+#define BACK_TRACE_FRAME_SIZE 32
+
 # include <signal.h>
+
 typedef struct Native_handler_context_struct {
     int code;
     siginfo_t *info;
@@ -13,6 +17,8 @@ typedef struct Native_handler_context_struct {
     pid_t tid;
     const char *processName;
     const char *threadName;
+    int frame_Size;
+    uintptr_t frames[BACK_TRACE_FRAME_SIZE];
 } native_handler_context;
 
 #define INSTANCE_FIELD_NAME                              "INSTANCE"
