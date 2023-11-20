@@ -7,6 +7,8 @@
 
 #define BACK_TRACE_FRAME_SIZE 32
 
+#define MAX_BUFFER_SIZE 256
+
 # include <signal.h>
 
 typedef struct Native_handler_context_struct {
@@ -21,6 +23,13 @@ typedef struct Native_handler_context_struct {
     uintptr_t frames[BACK_TRACE_FRAME_SIZE];
 } native_handler_context;
 
+
+typedef struct Stack_Traces {
+    jobjectArray javaTraceObj;
+    int buffer_size;
+    char buffers[BACK_TRACE_FRAME_SIZE][MAX_BUFFER_SIZE];
+} StackTraces;
+
 #define INSTANCE_FIELD_NAME                              "INSTANCE"
 #define INSTANCE_FIELD_NAME_SIGNATURE                    "Lcom/modi/elapse/elapsecrash/crashMonitor/NativeCrashMonitor;"
 #define GET_THREAD_BY_NAME_METHOD_NAME                   "getThreadByName"
@@ -33,7 +42,7 @@ typedef struct Native_handler_context_struct {
 
 # define EL_ERROR_CLASS                                    "java/lang/Error"
 # define EL_CONSTRUCTOR_METHOD                             "<init>"
-# define EL_CONSTRUCTOR_METHOD_SIGNATURE                   "()V"
+# define EL_CONSTRUCTOR_METHOD_SIGNATURE                   "(Ljava/lang/String;)V"
 
 # define GET_STACK_TRACE_METHOD_NAME                       "getStackTrace"
 # define GET_STACK_TRACE_METHOD_SIGNATURE                  "()[Ljava/lang/StackTraceElement;"

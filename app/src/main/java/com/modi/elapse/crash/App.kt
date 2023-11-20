@@ -7,5 +7,6 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
         CrashManager.Companion.initElapseCrash(this)
+        xcrash.XCrash.init(this)
     }
 }

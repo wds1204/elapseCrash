@@ -13,7 +13,6 @@
 
 StackTraces *stackTraces;
 
-
 JNIBridge::JNIBridge(JavaVM *javaVm, jobject callbackObj, jclass nativeCrashMonitorClass) {
     this->javaVm = javaVm;
     this->callbackObj = callbackObj;
@@ -27,16 +26,16 @@ JNIBridge::JNIBridge(JavaVM *javaVm, jobject callbackObj, jclass nativeCrashMoni
  */
 void JNIBridge::throwExceptionToJava(native_handler_context *handlerContext) {
     //1.计算Java岑的堆栈信息
-    setJavaThreadStackTraces(handlerContext->threadName);
+    setJavaThreadStackTraces(handlerContext);
     //2.获取native层的堆栈信息
     setNativeStackTraces(handlerContext);
 
     //3.调用CrashHandlerListener的onCrash方法
-    callJavaCrashMethod(handlerContext->threadName);
+    callJavaCrashMethod(handlerContext);
 
 }
 
-void JNIBridge::setJavaThreadStackTraces(const char *threadName) {
+void JNIBridge::setJavaThreadStackTraces(native_handler_context *handlerContext) {
     // 1. 在非Java线程中获取JNIEnv
     JNIEnv *env = nullptr;
     JavaVM *jvm = this->javaVm;
@@ -67,7 +66,7 @@ void JNIBridge::setJavaThreadStackTraces(const char *threadName) {
         LOGE("getThreadByName methodId error");
         return;
     }
-    jstring jThreadName = env->NewStringUTF(threadName);
+    jstring jThreadName = env->NewStringUTF(handlerContext->threadName);
 
     jobject threadObj = env->CallObjectMethod(kotlinObject,
                                               getThreadMethodId, jThreadName);
@@ -100,9 +99,14 @@ void JNIBridge::setJavaThreadStackTraces(const char *threadName) {
 }
 
 void JNIBridge::setNativeStackTraces(native_handler_context *handlerContext) {
-    LOGD("java.long.Error: signal %d (%s) at address ", handlerContext->code,
-         xcc_util_get_sigcodename(handlerContext->info));
+
     int frameSize = handlerContext->frame_Size;
+    size_t offset = 3;
+    stackTraces->buffer_size = frameSize + offset;
+    sprintf(stackTraces->buffers[0], "java.long.Error: signal (%d (%s) at address %p",
+            handlerContext->code,
+            xcc_util_get_sigcodename(handlerContext->info), handlerContext->info->si_addr);
+    sprintf(stackTraces->buffers[1], "\nbacktrace:");
     for (size_t index = 0; index < frameSize; ++index) {
         uintptr_t pc = handlerContext->frames[index];
         Dl_info info;
@@ -118,27 +122,29 @@ void JNIBridge::setNativeStackTraces(native_handler_context *handlerContext) {
             uintptr_t addr_rel = pc - (uintptr_t) info.dli_fbase;
             const uintptr_t addr_to_use = is_dll(info.dli_fname) ? addr_rel : pc;
             if (status == 0) {
-                LOGD("native crash #%02zx: pc 0x%016x %s (%s)\n", index, addr_to_use, demangled,
-                     info.dli_fname);
+
+                // 使用sprintf将值格式化到缓冲区中
+                sprintf(stackTraces->buffers[index + offset], "#%02zx: pc 0x%016lx %s (%s)", index,
+                        addr_to_use,
+                        demangled, info.dli_fname);
                 free(demangled);
             } else {
-                LOGD("native crash #%02zx: pc 0x%016x %s (%s)\n", index, addr_to_use,
-                     info.dli_sname, info.dli_fname);
-            }
-//
-//            LOGD("native crash #%02lx pc 0x%016lx %s (%s+0x%lx)", index, addr_to_use,
-//                 info.dli_fname, info.dli_sname, offs);
 
+                sprintf(stackTraces->buffers[index + offset], "#%02zx: pc 0x%016lx %s (%s)", index,
+                        addr_to_use,
+                        info.dli_sname, info.dli_fname);
+            }
 
         }
 
     }
 
+    sprintf(stackTraces->buffers[stackTraces->buffer_size - 1], "\njava stacktrace:");
 
 }
 
-void JNIBridge::callJavaCrashMethod(const char *threadName) {
-
+void JNIBridge::callJavaCrashMethod(native_handler_context *handlerContext) {
+    const char *threadName = handlerContext->threadName;
     JNIEnv *env = nullptr;
     JavaVM *jvm = this->javaVm;
     if (jvm->AttachCurrentThread(&env, nullptr) != JNI_OK) {
@@ -174,15 +180,55 @@ void JNIBridge::callJavaCrashMethod(const char *threadName) {
     }
     jstring thread_Name = env->NewStringUTF(threadName);
 
-    jobject errorObject = env->NewObject(errorClass, constructor);
+    char target[MAX_BUFFER_SIZE * 20];
+    LOGD("target %d", stackTraces->buffer_size);
+    // 打印所有缓冲区
+    for (size_t i = 0; i < stackTraces->buffer_size; ++i) {
+        LOGD("%s", stackTraces->buffers[i]);
+        strcat(target, stackTraces->buffers[i]);
+    }
+
+    jclass stackTraceElementClass = env->FindClass("java/lang/StackTraceElement");
+    size_t jLength = env->GetArrayLength(stackTraces->javaTraceObj);
+    size_t nLength = stackTraces->buffer_size;
+    size_t length = jLength + nLength;
+    jobjectArray stackTraceArray = env->NewObjectArray(length, stackTraceElementClass, NULL);
+
+    for (int i = 0; i < stackTraces->buffer_size; ++i) {
+        jstring message1 = env->NewStringUTF(stackTraces->buffers[i]);
+        jstring message2 = env->NewString(NULL, 0);
+
+        jobject stackTraceElement = env->NewObject(stackTraceElementClass,
+                                                   env->GetMethodID(stackTraceElementClass,
+                                                                    "<init>",
+                                                                    "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V"),
+                                                   message1, message2, message2, -1);
+        // 设置 StackTraceElement 数组的元素
+        env->SetObjectArrayElement(stackTraceArray, i, stackTraceElement);
+        env->DeleteLocalRef(message1);
+        env->DeleteLocalRef(message2);
+    }
+    for (size_t i = nLength; i < length; ++i) {
+        auto arrayObj = stackTraces->javaTraceObj;
+        jobject element = env->GetObjectArrayElement(arrayObj, i - nLength);
+
+        env->SetObjectArrayElement(stackTraceArray, i, element);
+    }
+
+
+    jstring message = env->NewStringUTF(stackTraces->buffers[0]);
+    jobject errorObject = env->NewObject(errorClass, constructor, message);
+
+
     jmethodID setTracesId = env->GetMethodID(errorClass, SET_STACK_TRACE_METHOD_NAME,
                                              SET_STACK_TRACE_METHOD_SIGNATURE);
+
     if (setTracesId == nullptr) {
         LOGE("%s fond error", SET_STACK_TRACE_METHOD_NAME);
         return;
     }
     // 调用 setStackTrace 方法
-    env->CallVoidMethod(errorObject, setTracesId, stackTraces->javaTraceObj);
+    env->CallVoidMethod(errorObject, setTracesId, stackTraceArray);
 
     env->CallVoidMethod(this->callbackObj, onCrash_methodId, thread_Name, errorObject);
 

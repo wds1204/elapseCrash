@@ -51,6 +51,7 @@ dependencies {
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.constraintlayout)
+    implementation(libs.xcrash)
     implementation(project(mapOf("path" to ":elapseCrash")))
     implementation(libs.preference)
     testImplementation(libs.junit)

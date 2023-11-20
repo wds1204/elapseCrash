@@ -34,20 +34,14 @@ internal object NativeCrashMonitor : CrashHandlerListener {
 
     override fun onCrash(threadName: String, error: Error) {
         //监听native层文件
-        val a = error.stackTrace
-        val sb = StringBuffer()
-        a.forEach {
-            println("onCrash forEach=${it}")
-            sb.append(it.toString()).append("\n")
-        }
 
-        println("onCrash=$sb")
-        buildString {
+
+        val str = buildString {
             error.stackTrace.forEach {
-                sb.append(it.toString()).append("\n")
+                append(it.toString().replace(".()", "")).append("\n")
             }
         }
-        saveCrashInfoToFile(sb.toString())
+        saveCrashInfoToFile(str)
 
     }
 
